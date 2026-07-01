@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { supabase } from './supabase-client.js';
+import { pushSupported, isPushEnabledForThisDevice, enablePushForThisDevice, disablePushForThisDevice } from './push.js';
 
 // ---- Design tokens ----
 // Palette: charcoal court background, warm chalk text, amber "shot clock" urgency accent,
@@ -986,6 +988,35 @@ function SettingsPanel({ profile, setProfile, onClose, items, tests, onImportDat
   const [importSuccess, setImportSuccess] = useState(false);
   const fileInputRef = React.useRef(null);
 
+  const [pushState, setPushState] = useState('checking'); // checking | unsupported | off | on | error
+  const [pushError, setPushError] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      if (!pushSupported()) { setPushState('unsupported'); return; }
+      const enabled = await isPushEnabledForThisDevice();
+      setPushState(enabled ? 'on' : 'off');
+    })();
+  }, []);
+
+  const togglePush = async () => {
+    setPushError('');
+    try {
+      const { data } = await supabase.auth.getUser();
+      const userId = data.user && data.user.id;
+      if (!userId) throw new Error('Not signed in.');
+      if (pushState === 'on') {
+        await disablePushForThisDevice(userId);
+        setPushState('off');
+      } else {
+        await enablePushForThisDevice(userId);
+        setPushState('on');
+      }
+    } catch (err) {
+      setPushError(err.message || 'Something went wrong turning that on.');
+    }
+  };
+
   const labelStyle = {
     fontFamily: BODY_FONT, fontSize: 11, fontWeight: 600, letterSpacing: 0.6,
     color: COLORS.chalkDim, textTransform: 'uppercase', marginBottom: 6, display: 'block',
@@ -1126,6 +1157,34 @@ function SettingsPanel({ profile, setProfile, onClose, items, tests, onImportDat
               </div>
             </>
           )}
+
+          <div style={{ marginTop: 18, paddingTop: 14, borderTop: `1px solid ${COLORS.panelBorder}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <label style={{ ...labelStyle, marginBottom: 0 }}>Notify this device</label>
+              {pushState !== 'checking' && pushState !== 'unsupported' && (
+                <button
+                  onClick={togglePush}
+                  style={{
+                    width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer', padding: 2,
+                    background: pushState === 'on' ? COLORS.amber : COLORS.panelBorder,
+                    display: 'flex', justifyContent: pushState === 'on' ? 'flex-end' : 'flex-start',
+                  }}
+                  aria-label="Toggle push notifications on this device"
+                >
+                  <span style={{ width: 18, height: 18, borderRadius: '50%', background: COLORS.chalk, display: 'block' }} />
+                </button>
+              )}
+            </div>
+            <div style={{ fontSize: 12, color: COLORS.chalkDim, lineHeight: 1.5 }}>
+              {pushState === 'unsupported' && "This browser doesn't support push notifications."}
+              {pushState === 'checking' && 'Checking…'}
+              {pushState === 'off' && 'Turn this on to get real notifications on this device when reminders come due — not just the in-app list.'}
+              {pushState === 'on' && "This device will get real notifications, even if the app isn't open."}
+            </div>
+            {pushError && (
+              <div style={{ fontSize: 12, color: COLORS.red, marginTop: 6 }}>{pushError}</div>
+            )}
+          </div>
         </div>
 
         <div style={{
