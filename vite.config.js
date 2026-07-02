@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png'],
       manifest: {
-        name: 'The Clock — Homework Tracker',
-        short_name: 'The Clock',
+        name: 'The Homework Tracker',
+        short_name: 'Homework',
         description: 'Track homework, tests, and quizzes by class with due-date reminders.',
         theme_color: '#171A21',
         background_color: '#171A21',
