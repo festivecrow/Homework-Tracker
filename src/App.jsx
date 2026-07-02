@@ -1049,7 +1049,7 @@ function SettingsPanel({ profile, setProfile, onClose, items, tests, onImportDat
     const a = document.createElement('a');
     const dateStamp = toDateInputValue(new Date());
     a.href = url;
-    a.download = `the-clock-backup-${dateStamp}.json`;
+    a.download = `homework-tracker-backup-${dateStamp}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
