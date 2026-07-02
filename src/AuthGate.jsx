@@ -96,7 +96,7 @@ export default function AuthGate({ children }) {
         {sent ? (
           <>
             <div style={{ fontFamily: 'sans-serif', fontSize: 13.5, color: COLORS.chalkDim, marginBottom: 16, lineHeight: 1.6 }}>
-              We sent a 6-digit code to <strong style={{ color: COLORS.chalk }}>{email}</strong>.
+              We sent a verification code to <strong style={{ color: COLORS.chalk }}>{email}</strong>.
               Type it below — don't tap the link in the email if you're using the installed app, since that opens Safari instead.
             </div>
             <input
