@@ -87,7 +87,7 @@ export default function AuthGate({ children }) {
     }}>
       <div style={{ width: '100%', maxWidth: 360 }}>
         <div style={{ fontFamily: 'sans-serif', fontSize: 13, letterSpacing: 1.5, color: COLORS.chalkDim, textTransform: 'uppercase', marginBottom: 4 }}>
-          The Clock
+          The Homework Tracker
         </div>
         <h1 style={{ fontFamily: 'sans-serif', fontSize: 28, color: COLORS.chalk, margin: '0 0 20px', fontWeight: 700 }}>
           {sent ? 'Enter your code' : 'Sign in'}
