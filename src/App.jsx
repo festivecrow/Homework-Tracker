@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from './supabase-client.js';
 import { pushSupported, isPushEnabledForThisDevice, enablePushForThisDevice, disablePushForThisDevice } from './push.js';
+import { toCamelAssignment, toCamelTest } from './storage-shim-supabase.js';
 
 // ---- Design tokens ----
 // Palette: charcoal court background, warm chalk text, amber "shot clock" urgency accent,
@@ -1017,6 +1018,43 @@ function SettingsPanel({ profile, setProfile, onClose, items, tests, onImportDat
     }
   };
 
+  const [latestBackup, setLatestBackup] = useState(null); // null = none yet, undefined = loading
+  const [confirmRestore, setConfirmRestore] = useState(false);
+  const [restoreStatus, setRestoreStatus] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user && userData.user.id;
+      if (!userId) return;
+      const { data } = await supabase
+        .from('backups')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setLatestBackup(data || undefined);
+    })();
+  }, []);
+
+  const restoreFromBackup = () => {
+    if (!latestBackup) return;
+    const snap = latestBackup.snapshot;
+    onImportData({
+      profile: {
+        name: snap.profile.name || '',
+        school: snap.profile.school || '',
+        classes: snap.profile.classes || [],
+        customReminderTime: snap.profile.custom_reminder_time || '',
+      },
+      items: (snap.assignments || []).map(toCamelAssignment),
+      tests: (snap.tests || []).map(toCamelTest),
+    });
+    setRestoreStatus('Restored. Close settings to see it.');
+    setConfirmRestore(false);
+  };
+
   const labelStyle = {
     fontFamily: BODY_FONT, fontSize: 11, fontWeight: 600, letterSpacing: 0.6,
     color: COLORS.chalkDim, textTransform: 'uppercase', marginBottom: 6, display: 'block',
@@ -1194,7 +1232,7 @@ function SettingsPanel({ profile, setProfile, onClose, items, tests, onImportDat
             Backup
           </div>
           <div style={{ fontSize: 12.5, color: COLORS.chalkDim, marginBottom: 12, lineHeight: 1.6 }}>
-            Everything here lives only in this preview. Download a backup now and then so you never lose it, and use it to move your data if you switch devices.
+            Your data syncs automatically to your account. A manual download is still useful before switching devices or just for peace of mind.
           </div>
           <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
             <button type="button" onClick={exportData} style={{
@@ -1221,6 +1259,37 @@ function SettingsPanel({ profile, setProfile, onClose, items, tests, onImportDat
           {importSuccess && (
             <div style={{ fontSize: 12, color: COLORS.teal }}>Restored. Close settings to see it.</div>
           )}
+
+          <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${COLORS.panelBorder}` }}>
+            <div style={{ fontSize: 12, color: COLORS.chalkDim, marginBottom: 8 }}>
+              {latestBackup === null && 'Checking for automatic backups…'}
+              {latestBackup === undefined && 'No automatic backups yet — the first one is taken on the next scheduled run.'}
+              {latestBackup && `Last automatic backup: ${new Date(latestBackup.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`}
+            </div>
+            {latestBackup && (
+              confirmRestore ? (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={restoreFromBackup} style={{
+                    flex: 1, background: COLORS.red, border: 'none', color: '#fff', borderRadius: 8,
+                    padding: '9px 0', fontFamily: BODY_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                  }}>Replace current data</button>
+                  <button onClick={() => setConfirmRestore(false)} style={{
+                    flex: 1, background: 'transparent', border: `1px solid ${COLORS.panelBorder}`, color: COLORS.chalkDim,
+                    borderRadius: 8, padding: '9px 0', fontFamily: BODY_FONT, fontSize: 13, cursor: 'pointer',
+                  }}>Cancel</button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => setConfirmRestore(true)} style={{
+                  width: '100%', background: 'transparent', border: `1px solid ${COLORS.panelBorder}`,
+                  color: COLORS.chalk, borderRadius: 8, padding: '10px 0',
+                  fontFamily: BODY_FONT, fontWeight: 600, fontSize: 13.5, cursor: 'pointer',
+                }}>Restore from latest automatic backup</button>
+              )
+            )}
+            {restoreStatus && (
+              <div style={{ fontSize: 12, color: COLORS.teal, marginTop: 8 }}>{restoreStatus}</div>
+            )}
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 10 }}>
