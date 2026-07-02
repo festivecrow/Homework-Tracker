@@ -946,7 +946,7 @@ function Onboarding({ onComplete }) {
           color: COLORS.amber, textTransform: 'uppercase', marginBottom: 4,
         }}>Welcome to</div>
         <h1 style={{ fontFamily: DISPLAY_FONT, fontSize: 44, margin: '0 0 24px', lineHeight: 1 }}>
-          The Clock
+          The Homework Tracker
         </h1>
 
         <div style={{ marginBottom: 16 }}>
