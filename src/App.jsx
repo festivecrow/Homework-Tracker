@@ -1455,7 +1455,7 @@ export default function HomeworkTracker() {
               fontFamily: BODY_FONT, fontSize: 11, letterSpacing: 1.5,
               color: COLORS.chalkDim, textTransform: 'uppercase', marginBottom: 2,
             }}>
-              {profile.school ? profile.school : 'The Clock'}
+              {profile.school ? profile.school : 'The Homework Tracker'}
             </div>
             <h1 style={{
               fontFamily: DISPLAY_FONT, fontSize: 42, letterSpacing: 0.5,
